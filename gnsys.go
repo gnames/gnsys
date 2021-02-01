@@ -1,4 +1,4 @@
-package sys
+package gnsys
 
 import (
 	"fmt"
@@ -7,12 +7,15 @@ import (
 	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
-	log "github.com/sirupsen/logrus"
 )
 
 // MakeDir a directory out of a given unless it already exists.
 func MakeDir(dir string) error {
-	dir = ConvertTilda(dir)
+	var err error
+	dir, err = ConvertTilda(dir)
+	if err != nil {
+		return err
+	}
 	path, err := os.Stat(dir)
 	if os.IsNotExist(err) {
 		return os.MkdirAll(dir, 0755)
@@ -24,16 +27,16 @@ func MakeDir(dir string) error {
 }
 
 // FileExists checks if a file exists, and that it is a regular file.
-func FileExists(f string) bool {
+func FileExists(f string) (bool, error) {
 	path, err := os.Stat(f)
 	if os.IsNotExist(err) {
-		return false
+		return false, nil
 	}
 	if !path.Mode().IsRegular() {
-		log.Fatal(fmt.Errorf("'%s' is not a regular file, "+
-			"delete or move it and try again.", f))
+		return false, fmt.Errorf("'%s' is not a regular file, "+
+			"delete or move it and try again.", f)
 	}
-	return true
+	return true, nil
 }
 
 // CleanDir removes all files from a directory.
@@ -58,13 +61,13 @@ func CleanDir(dir string) error {
 }
 
 // ConvertTilda expands paths with `~/` to an actual home directory.
-func ConvertTilda(path string) string {
+func ConvertTilda(path string) (string, error) {
 	if strings.HasPrefix(path, "~/") || strings.HasPrefix(path, "~\\") {
 		home, err := homedir.Dir()
 		if err != nil {
-			log.Fatal(err)
+			return "", err
 		}
 		path = filepath.Join(home, path[2:])
 	}
-	return path
+	return path, nil
 }
