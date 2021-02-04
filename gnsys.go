@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 // MakeDir a directory out of a given unless it already exists.
@@ -63,7 +61,7 @@ func CleanDir(dir string) error {
 // ConvertTilda expands paths with `~/` to an actual home directory.
 func ConvertTilda(path string) (string, error) {
 	if strings.HasPrefix(path, "~/") || strings.HasPrefix(path, "~\\") {
-		home, err := homedir.Dir()
+		home, err := os.UserHomeDir()
 		if err != nil {
 			return "", err
 		}
