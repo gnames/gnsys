@@ -2,6 +2,7 @@ package gnsys
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,9 +33,41 @@ func FileExists(f string) (bool, error) {
 	}
 	if !path.Mode().IsRegular() {
 		return false, fmt.Errorf("'%s' is not a regular file, "+
-			"delete or move it and try again.", f)
+			"delete or move it and try again", f)
 	}
 	return true, nil
+}
+
+// DirExists checks if directory exists and if it is empty
+func DirExists(path string) (bool, bool, error) {
+	st, err := os.Stat(path)
+	if os.IsNotExist(err) || st.Mode().IsRegular() {
+		return false, false, err
+	}
+
+	d, err := os.Open(path)
+	if err != nil {
+		return false, false, err
+	}
+	defer d.Close()
+
+	_, err = d.Readdirnames(1)
+	if err == io.EOF {
+		return true, true, nil
+	} else if err != nil {
+		return false, false, err
+	}
+	return true, false, nil
+}
+
+func IsFile(path string) bool {
+	res, _ := FileExists(path)
+	return res
+}
+
+func IsDir(path string) bool {
+	res, _, _ := DirExists(path)
+	return res
 }
 
 // CleanDir removes all files from a directory.
