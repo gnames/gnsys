@@ -19,6 +19,9 @@ func MakeDir(dir string) error {
 	if os.IsNotExist(err) {
 		return os.MkdirAll(dir, 0755)
 	}
+	if path == nil {
+		return nil
+	}
 	if path.Mode().IsRegular() {
 		return fmt.Errorf("'%s' is a file, not a directory", dir)
 	}
@@ -29,6 +32,9 @@ func MakeDir(dir string) error {
 func FileExists(f string) (bool, error) {
 	path, err := os.Stat(f)
 	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if path == nil {
 		return false, nil
 	}
 	if !path.Mode().IsRegular() {
