@@ -45,7 +45,7 @@ func FileExists(f string) (bool, error) {
 }
 
 // DirExists checks if directory exists and if it is empty
-func DirExists(path string) (bool, bool, error) {
+func DirExists(path string) (exists bool, empty bool, err error) {
 	st, err := os.Stat(path)
 	if os.IsNotExist(err) || st.Mode().IsRegular() {
 		return false, false, err
@@ -76,8 +76,17 @@ func IsDir(path string) bool {
 	return res
 }
 
-// CleanDir removes all files from a directory.
+// CleanDir removes all files from a directory or creates the directory if
+// it is absent.
 func CleanDir(dir string) error {
+	exists, _, err := DirExists(dir)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return MakeDir(dir)
+	}
+
 	d, err := os.Open(dir)
 	if err != nil {
 		return err
