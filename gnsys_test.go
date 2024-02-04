@@ -93,9 +93,28 @@ func TestIsDir(t *testing.T) {
 		{"is not dir", "testdata/nodir", false},
 	}
 	for _, v := range tests {
-		t.Run(v.name, func(t *testing.T) {
+		t.Run(v.name, func(_ *testing.T) {
 			isdir := gnsys.IsDir(v.path)
 			is.Equal(v.isDir, isdir)
+		})
+	}
+}
+
+func TestGetDirState(t *testing.T) {
+	is := is.New(t)
+	tests := []struct {
+		name, path string
+		state      gnsys.DirState
+	}{
+		{"is dir", "testdata", gnsys.DirNotEmpty},
+		{"is empty dir", "testdata/empty_dir", gnsys.DirEmpty},
+		{"is not dir", "testdata/text.txt", gnsys.NotDir},
+		{"absent", "testdata/absent_from_tests", gnsys.DirAbsent},
+	}
+	for _, v := range tests {
+		t.Run(v.name, func(_ *testing.T) {
+			state := gnsys.GetDirState(v.path)
+			is.Equal(v.state, state)
 		})
 	}
 }

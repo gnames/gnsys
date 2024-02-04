@@ -8,6 +8,60 @@ import (
 	"strings"
 )
 
+// DirState represents the state of a directory.
+type DirState int
+
+const (
+	Unknown DirState = iota
+	NotDir
+	DirAbsent
+	DirEmpty
+	DirNotEmpty
+)
+
+// String returns a string representation of the DirState.
+func (d DirState) String() string {
+	switch d {
+	case NotDir:
+		return "NotDir"
+	case DirAbsent:
+		return "DirAbsent"
+	case DirEmpty:
+		return "DirEmpty"
+	case DirNotEmpty:
+		return "DirNotEmpty"
+	}
+	return "Unknown"
+}
+
+// GetDirState returns the state of a directory.
+func GetDirState(dir string) DirState {
+	st, err := os.Stat(dir)
+	if os.IsNotExist(err) {
+		return DirAbsent
+	}
+	if st == nil {
+		return NotDir
+	}
+	if !st.Mode().IsDir() {
+		return NotDir
+	}
+
+	d, err := os.Open(dir)
+	if err != nil {
+		return Unknown
+	}
+	defer d.Close()
+
+	_, err = d.Readdirnames(1)
+	if err == io.EOF {
+		return DirEmpty
+	} else if err != nil {
+		return Unknown
+	}
+	return DirNotEmpty
+}
+
 // MakeDir a directory out of a given unless it already exists.
 func MakeDir(dir string) error {
 	var err error
