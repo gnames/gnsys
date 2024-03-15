@@ -1,6 +1,8 @@
 package gnsys_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/gnames/gnsys"
@@ -117,4 +119,19 @@ func TestGetDirState(t *testing.T) {
 			is.Equal(v.state, state)
 		})
 	}
+}
+
+func TestDownload(t *testing.T) {
+	is := is.New(t)
+	url := "http://opendata.globalnames.org/dwca/183-sherborn.tar.gz"
+	// url := "http://opendata.globalnames.org/dwca/001-col-2024-01-23.tar.gz"
+	fileName := filepath.Base(url)
+	path := os.TempDir()
+	err := gnsys.Download(url, path)
+	is.NoErr(err)
+	filePath := filepath.Join(path, fileName)
+	exists, _ := gnsys.FileExists(filePath)
+	is.True(exists)
+	err = os.Remove(filePath)
+	is.NoErr(err)
 }
