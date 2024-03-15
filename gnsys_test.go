@@ -2,7 +2,6 @@ package gnsys_test
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/gnames/gnsys"
@@ -20,7 +19,7 @@ func TestConvertTilda(t *testing.T) {
 	}
 
 	for _, v := range tests {
-		t.Run(v.name, func(t *testing.T) {
+		t.Run(v.name, func(_ *testing.T) {
 			path, err := gnsys.ConvertTilda(v.input)
 			is.Equal(len(v.input) == len(path), v.outputSameSize)
 			is.Equal(v.errNil, err == nil)
@@ -39,7 +38,7 @@ func TestFileExists(t *testing.T) {
 		{"is dir", "testdata", false, false},
 	}
 	for _, v := range tests {
-		t.Run(v.name, func(t *testing.T) {
+		t.Run(v.name, func(_ *testing.T) {
 			exists, err := gnsys.FileExists(v.path)
 			is.Equal(v.fileExists, exists)
 			is.Equal(v.errNil, err == nil)
@@ -57,7 +56,7 @@ func TestDirExists(t *testing.T) {
 		{"dir exists not", "testdata/nodir", false, false, false},
 	}
 	for _, v := range tests {
-		t.Run(v.name, func(t *testing.T) {
+		t.Run(v.name, func(_ *testing.T) {
 			exists, empty, err := gnsys.DirExists(v.path)
 			is.Equal(v.dirExists, exists)
 			is.Equal(v.dirEmpty, empty)
@@ -77,7 +76,7 @@ func TestIsFile(t *testing.T) {
 		{"is not file", "testdata/nofile", false},
 	}
 	for _, v := range tests {
-		t.Run(v.name, func(t *testing.T) {
+		t.Run(v.name, func(_ *testing.T) {
 			isfile := gnsys.IsFile(v.path)
 			is.Equal(v.isFile, isfile)
 		})
@@ -124,12 +123,9 @@ func TestGetDirState(t *testing.T) {
 func TestDownload(t *testing.T) {
 	is := is.New(t)
 	url := "http://opendata.globalnames.org/dwca/183-sherborn.tar.gz"
-	// url := "http://opendata.globalnames.org/dwca/001-col-2024-01-23.tar.gz"
-	fileName := filepath.Base(url)
 	path := os.TempDir()
-	err := gnsys.Download(url, path)
+	filePath, err := gnsys.Download(url, path, false)
 	is.NoErr(err)
-	filePath := filepath.Join(path, fileName)
 	exists, _ := gnsys.FileExists(filePath)
 	is.True(exists)
 	err = os.Remove(filePath)
