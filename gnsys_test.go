@@ -2,11 +2,22 @@ package gnsys_test
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/gnames/gnsys"
 	"github.com/matryer/is"
+	"github.com/stretchr/testify/assert"
 )
+
+func TestPing(t *testing.T) {
+	assert := assert.New(t)
+	ping := gnsys.Ping("google.com:80", 3)
+	assert.True(ping)
+
+	ping = gnsys.Ping("notAserver:80", 3)
+	assert.False(ping)
+}
 
 func TestConvertTilda(t *testing.T) {
 	is := is.New(t)
@@ -103,6 +114,7 @@ func TestIsDir(t *testing.T) {
 
 func TestGetDirState(t *testing.T) {
 	is := is.New(t)
+	makeEmptyDir(t)
 	tests := []struct {
 		name, path string
 		state      gnsys.DirState
@@ -118,6 +130,11 @@ func TestGetDirState(t *testing.T) {
 			is.Equal(v.state, state)
 		})
 	}
+}
+
+func makeEmptyDir(t *testing.T) {
+	dir := filepath.Join("testdata/empty_dir")
+	os.Mkdir(dir, 0775)
 }
 
 func TestDownload(t *testing.T) {

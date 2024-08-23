@@ -3,13 +3,32 @@ package gnsys
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/cheggaaa/pb/v3"
 )
 
+// Ping checks if a server is reachable.
+// Host should be in format "host:port" (eg "google.com:80")
+func Ping(host string, seconds int) bool {
+	_, err := net.DialTimeout(
+		"tcp",
+		host,
+		time.Second*time.Duration(seconds),
+	)
+
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+// Download copies remote file to local drive. It provides the name
+// of downloaded file and error as output.
 func Download(url, destDir string, showProgress bool) (string, error) {
 	// Get the filename from the URL
 	filename := filepath.Base(url)
