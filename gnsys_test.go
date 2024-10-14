@@ -1,6 +1,7 @@
 package gnsys_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -147,4 +148,28 @@ func TestDownload(t *testing.T) {
 	is.True(exists)
 	err = os.Remove(filePath)
 	is.NoErr(err)
+}
+
+func TestSplitPath(t *testing.T) {
+	assert := assert.New(t)
+	tests := []struct {
+		msg, path, dir, file, ext string
+	}{
+		{"empty", "", "", "", ""},
+		{"root1", "/", "/", "", ""},
+		{"any", "c", "c", "", ""},
+		{"dir1", "/one/two/three/", "/one/two/three", "", ""},
+		{"dir3", "~/one/two/three/", "~/one/two/three", "", ""},
+		{"file1", "~/one/two/three", "~/one/two", "three", ""},
+		{"file2", "./one/two/three.txt", "one/two", "three", ".txt"},
+		{"file3", "../one/two/three.txt.gz", "../one/two", "three.txt", ".gz"},
+	}
+
+	for _, v := range tests {
+		d, f, e := gnsys.SplitPath(v.path)
+		fmt.Printf("%s, %s, %s", d, f, e)
+		assert.Equal(v.dir, d, v.msg+":dir")
+		assert.Equal(v.file, f, v.msg+":file")
+		assert.Equal(v.ext, e, v.msg+":ext")
+	}
 }

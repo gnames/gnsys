@@ -171,3 +171,21 @@ func ConvertTilda(path string) (string, error) {
 	}
 	return path, nil
 }
+
+// SplitPath breaks path into directory, file name and extension.
+func SplitPath(path string) (dir, base, ext string) {
+	if len(path) < 2 {
+		return path, "", ""
+	}
+
+	e := path[len(path)-1]
+	if e == '/' {
+		return path[:len(path)-1], "", ""
+	}
+
+	dir = filepath.Dir(path)
+	base = filepath.Base(path)
+	ext = filepath.Ext(path)
+	base = base[:len(base)-len(ext)] // Remove extension from base
+	return
+}

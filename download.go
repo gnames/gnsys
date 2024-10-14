@@ -27,6 +27,15 @@ func Ping(host string, seconds int) bool {
 	return true
 }
 
+type ErrDownload struct {
+	URL string
+	Err error
+}
+
+func (e *ErrDownload) Error() string {
+	return fmt.Sprintf("cannot download file: %s", e.Err)
+}
+
 // Download copies remote file to local drive. It provides the name
 // of downloaded file and error as output.
 func Download(url, destDir string, showProgress bool) (string, error) {
@@ -44,7 +53,7 @@ func Download(url, destDir string, showProgress bool) (string, error) {
 	// Issue HTTP GET request
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", err
+		return "", &ErrDownload{URL: url, Err: err}
 	}
 	defer resp.Body.Close()
 
@@ -53,7 +62,7 @@ func Download(url, destDir string, showProgress bool) (string, error) {
 			"download failed: server returned status %d",
 			resp.StatusCode,
 		)
-		return "", err
+		return "", &ErrDownload{URL: url, Err: err}
 	}
 
 	// Get the total file size from the content-length header
@@ -74,7 +83,7 @@ func Download(url, destDir string, showProgress bool) (string, error) {
 	_, err = io.Copy(outFile, reader)
 	// Copy data with progress updates
 	if err != nil {
-		return "", err
+		return "", &ErrDownload{URL: url, Err: err}
 	}
 
 	return destPath, nil
