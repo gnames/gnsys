@@ -1,7 +1,6 @@
 package gnsys
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -77,7 +76,7 @@ func MakeDir(dir string) error {
 		return nil
 	}
 	if path.Mode().IsRegular() {
-		return fmt.Errorf("'%s' is a file, not a directory", dir)
+		return &ErrNotDir{Path: path.Name()}
 	}
 	return nil
 }
@@ -92,8 +91,7 @@ func FileExists(f string) (bool, error) {
 		return false, nil
 	}
 	if !path.Mode().IsRegular() {
-		return false, fmt.Errorf("'%s' is not a regular file, "+
-			"delete or move it and try again", f)
+		return false, &ErrNotFile{Path: f}
 	}
 	return true, nil
 }

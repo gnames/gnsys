@@ -27,15 +27,6 @@ func Ping(host string, seconds int) bool {
 	return true
 }
 
-type ErrDownload struct {
-	URL string
-	Err error
-}
-
-func (e *ErrDownload) Error() string {
-	return fmt.Sprintf("cannot download file: %s", e.Err)
-}
-
 // Download copies remote file to local drive. It provides the name
 // of downloaded file and error as output.
 func Download(url, destDir string, showProgress bool) (string, error) {
