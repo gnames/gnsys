@@ -12,7 +12,9 @@ const (
 	TarFT              // .tar
 	TarGzFT            // .tar.gz
 	TarXzFt            // .tar.xz
-	TarBzFT            //.tar.bz2
+	TarBzFT            // .tar.bz2
+	SqlFT              // .sql
+	SqliteFT           // .sqlite
 )
 
 var ftMap = map[FileType]string{
@@ -22,6 +24,8 @@ var ftMap = map[FileType]string{
 	TarGzFT:   "tar-gzip",
 	TarXzFt:   "tar-xz",
 	TarBzFT:   "tar-bz2",
+	SqlFT:     "sql",
+	SqliteFT:  "sqlite",
 }
 
 func (ft FileType) String() string {
@@ -40,6 +44,10 @@ func GetFileType(file string) FileType {
 		return TarXzFt
 	case strings.HasSuffix(file, ".tar.bz2"):
 		return TarBzFT
+	case strings.HasSuffix(file, ".sql"):
+		return SqlFT
+	case strings.HasSuffix(file, ".sqlite"):
+		return SqliteFT
 	default:
 		return UnknownFT
 	}
