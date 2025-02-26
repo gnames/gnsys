@@ -1,6 +1,6 @@
 module github.com/gnames/gnsys
 
-go 1.23.5
+go 1.23.6
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.6

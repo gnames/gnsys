@@ -9,6 +9,7 @@ type FileType int
 const (
 	UnknownFT FileType = iota
 	ZipFT              // .zip
+	GzFT               // .gz
 	TarFT              // .tar
 	TarGzFT            // .tar.gz
 	TarXzFt            // .tar.xz
@@ -20,6 +21,7 @@ const (
 var ftMap = map[FileType]string{
 	UnknownFT: "unknown",
 	ZipFT:     "zip",
+	GzFT:      "gz",
 	TarFT:     "tar",
 	TarGzFT:   "tar-gzip",
 	TarXzFt:   "tar-xz",
@@ -40,6 +42,8 @@ func GetFileType(file string) FileType {
 		return TarFT
 	case strings.HasSuffix(file, ".tar.gz"):
 		return TarGzFT
+	case strings.HasSuffix(file, ".gz"):
+		return GzFT
 	case strings.HasSuffix(file, ".tar.xz"):
 		return TarXzFt
 	case strings.HasSuffix(file, ".tar.bz2"):

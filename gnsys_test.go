@@ -135,7 +135,8 @@ func TestGetDirState(t *testing.T) {
 
 func makeEmptyDir(t *testing.T) {
 	dir := filepath.Join("testdata/empty_dir")
-	os.Mkdir(dir, 0775)
+	err := os.Mkdir(dir, 0775)
+	assert.Nil(t, err)
 }
 
 func TestDownload(t *testing.T) {

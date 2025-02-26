@@ -84,6 +84,41 @@ func ExtractTar(srcPath, dstDir string) error {
 	return untar(tr, srcPath, dstDir)
 }
 
+func ExtractGz(srcPath, dstDir string) error {
+	// Open the .gz archive for reading.
+	file, err := os.Open(srcPath)
+	if err != nil {
+		return &ErrExtract{Path: srcPath, Err: err}
+	}
+	defer file.Close()
+
+	// Create a new gzip reader.
+	gzReader, err := gzip.NewReader(file)
+	if err != nil {
+		return &ErrExtract{Path: srcPath, Err: err}
+	}
+	defer gzReader.Close()
+
+	// Determine the destination file name.
+	dstFileName := filepath.Base(srcPath)
+	dstFileName = dstFileName[:len(dstFileName)-3] // Remove ".gz" extension
+	dstPath := filepath.Join(dstDir, dstFileName)
+
+	// Create the destination file.
+	dstFile, err := os.OpenFile(dstPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	if err != nil {
+		return &ErrExtract{Path: dstPath, Err: err}
+	}
+	defer dstFile.Close()
+
+	// Copy the file contents from the gzip reader to the destination file.
+	if _, err := io.Copy(dstFile, gzReader); err != nil {
+		return &ErrExtract{Path: dstPath, Err: err}
+	}
+
+	return nil
+}
+
 // ExtractTarGz extracts a tar.gz archive located at srcPath to the destination
 // directory dstDir.
 func ExtractTarGz(srcPath, dstDir string) error {
