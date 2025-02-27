@@ -1,10 +1,13 @@
 package gnsys
 
 import (
+	"bufio"
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
 
 // DirState represents the state of a directory.
@@ -121,6 +124,58 @@ func DirExists(path string) (exists bool, empty bool, err error) {
 func IsFile(path string) bool {
 	res, _ := FileExists(path)
 	return res
+}
+
+func IsTextFile(path string) (bool, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	const maxCapacity = 4096
+	buf := make([]byte, maxCapacity)
+	scanner.Buffer(buf, maxCapacity)
+
+	lineCount := 0
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		lineCount++
+
+		// Check for null bytes (common in binary files).
+		if bytes.Contains(line, []byte{0}) {
+			return false, nil
+		}
+
+		// Check for a high percentage of non-printable characters.
+		nonPrintableCount := 0
+		for _, b := range line {
+			if !unicode.IsPrint(rune(b)) && !unicode.IsSpace(rune(b)) {
+				nonPrintableCount++
+			}
+		}
+
+		if float64(nonPrintableCount)/float64(len(line)) > 0.3 && len(line) > 0 {
+			return false, nil
+		}
+
+		// Check for extremely long lines without newlines (common in some binary formats).
+		if len(line) > 1000 && !strings.Contains(string(line), "\n") &&
+			!strings.Contains(string(line), "\r") {
+			return false, nil
+		}
+
+		if lineCount > 20 { //check only the first 20 lines.
+			break
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func IsDir(path string) bool {

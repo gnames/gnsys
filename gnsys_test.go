@@ -134,9 +134,13 @@ func TestGetDirState(t *testing.T) {
 }
 
 func makeEmptyDir(t *testing.T) {
+	assert := assert.New(t)
 	dir := filepath.Join("testdata/empty_dir")
-	err := os.Mkdir(dir, 0775)
-	assert.Nil(t, err)
+	err := os.RemoveAll(dir)
+	// err would be nil if dir does not exist
+	assert.Nil(err)
+	err = os.Mkdir(dir, 0775)
+	assert.Nil(err)
 }
 
 func TestDownload(t *testing.T) {
@@ -172,5 +176,25 @@ func TestSplitPath(t *testing.T) {
 		assert.Equal(v.dir, d, v.msg+":dir")
 		assert.Equal(v.file, f, v.msg+":file")
 		assert.Equal(v.ext, e, v.msg+":ext")
+	}
+}
+
+func TestIsTextFile(t *testing.T) {
+	assert := assert.New(t)
+	tests := []struct {
+		msg, file string
+		isErr     bool
+		isText    bool
+	}{
+		{"text", "text.txt", false, true},
+		{"gz", "text.txt.gz", false, false},
+		{"none", "ddd-no-such-file", true, false},
+	}
+
+	for _, v := range tests {
+		path := filepath.Join("testdata", v.file)
+		isText, err := gnsys.IsTextFile(path)
+		assert.Equal(v.isErr, err != nil)
+		assert.Equal(v.isText, isText)
 	}
 }
