@@ -242,3 +242,34 @@ func SplitPath(path string) (dir, base, ext string) {
 	base = base[:len(base)-len(ext)] // Remove extension from base
 	return
 }
+
+// CopyFile copies a file from src to dst. If dst does not exist, it is created.
+// If dst already exists, its contents are truncated.
+func CopyFile(src, dst string) (int64, error) {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer sourceFile.Close() // Ensure the source file is closed
+
+	destinationFile, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destinationFile.Close() // Ensure the destination file is closed
+
+	// Copy the contents from source to destination
+	// io.Copy handles buffering efficiently.
+	bytesCopied, err := io.Copy(destinationFile, sourceFile)
+	if err != nil {
+		return 0, err
+	}
+
+	// Ensure all writes are flushed to disk
+	err = destinationFile.Sync()
+	if err != nil {
+		return 0, err
+	}
+
+	return bytesCopied, nil
+}
