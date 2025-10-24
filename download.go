@@ -63,6 +63,7 @@ func Download(url, destDir string, showProgress bool) (string, error) {
 	if showProgress {
 		// Create the progress bar
 		bar := pb.Full.Start64(contentLength)
+		bar.Set(pb.CleanOnFinish, true)
 		reader = bar.NewProxyReader(resp.Body)
 
 		// Finish the progress bar
