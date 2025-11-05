@@ -25,3 +25,20 @@ func TestExtractGZ(t *testing.T) {
 	err = os.RemoveAll(tempDir)
 	assert.Nil(err)
 }
+
+func TestExtractXz(t *testing.T) {
+	assert := assert.New(t)
+	xzFile := filepath.Join("testdata", "text.txt.xz")
+	tempDir, err := os.MkdirTemp("", "gnsys-test")
+	assert.Nil(err)
+
+	err = gnsys.ExtractXz(xzFile, tempDir)
+	assert.Nil(err)
+
+	exists, err := gnsys.FileExists(filepath.Join(tempDir, "text.txt"))
+	assert.Nil(err)
+	assert.True(exists)
+
+	err = os.RemoveAll(tempDir)
+	assert.Nil(err)
+}

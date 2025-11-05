@@ -4,7 +4,6 @@ go 1.23.6
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.6
-	github.com/matryer/is v1.4.1
 	github.com/stretchr/testify v1.9.0
 	github.com/ulikunitz/xz v0.5.12
 )

@@ -119,6 +119,42 @@ func ExtractGz(srcPath, dstDir string) error {
 	return nil
 }
 
+// ExtractXz extracts a .xz compressed file located at srcPath to the destination
+// directory dstDir.
+func ExtractXz(srcPath, dstDir string) error {
+	// Open the .xz file for reading.
+	file, err := os.Open(srcPath)
+	if err != nil {
+		return &ErrExtract{Path: srcPath, Err: err}
+	}
+	defer file.Close()
+
+	// Create a new xz reader.
+	xzReader, err := xz.NewReader(file)
+	if err != nil {
+		return &ErrExtract{Path: srcPath, Err: err}
+	}
+
+	// Determine the destination file name.
+	dstFileName := filepath.Base(srcPath)
+	dstFileName = dstFileName[:len(dstFileName)-3] // Remove ".xz" extension
+	dstPath := filepath.Join(dstDir, dstFileName)
+
+	// Create the destination file.
+	dstFile, err := os.OpenFile(dstPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	if err != nil {
+		return &ErrExtract{Path: dstPath, Err: err}
+	}
+	defer dstFile.Close()
+
+	// Copy the file contents from the xz reader to the destination file.
+	if _, err := io.Copy(dstFile, xzReader); err != nil {
+		return &ErrExtract{Path: dstPath, Err: err}
+	}
+
+	return nil
+}
+
 // ExtractTarGz extracts a tar.gz archive located at srcPath to the destination
 // directory dstDir.
 func ExtractTarGz(srcPath, dstDir string) error {
