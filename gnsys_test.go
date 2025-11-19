@@ -154,6 +154,40 @@ func TestDownload(t *testing.T) {
 	assert.NoError(err)
 }
 
+func TestDownloadFileURL(t *testing.T) {
+	assert := assert.New(t)
+
+	// Create a temporary source file
+	srcDir, err := os.MkdirTemp("", "gnsys-test-src-")
+	assert.NoError(err)
+	defer os.RemoveAll(srcDir)
+
+	srcPath := filepath.Join(srcDir, "testfile.txt")
+	testContent := []byte("Hello, this is test content for file:// URL download")
+	err = os.WriteFile(srcPath, testContent, 0644)
+	assert.NoError(err)
+
+	// Create a temporary destination directory
+	destDir, err := os.MkdirTemp("", "gnsys-test-dest-")
+	assert.NoError(err)
+	defer os.RemoveAll(destDir)
+
+	// Download using file:// URL
+	fileURL := "file://" + srcPath
+	destPath, err := gnsys.Download(fileURL, destDir, false)
+	assert.NoError(err)
+
+	// Verify the file was copied
+	exists, err := gnsys.FileExists(destPath)
+	assert.NoError(err)
+	assert.True(exists)
+
+	// Verify content matches
+	copiedContent, err := os.ReadFile(destPath)
+	assert.NoError(err)
+	assert.Equal(testContent, copiedContent)
+}
+
 func TestSplitPath(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
