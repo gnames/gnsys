@@ -38,7 +38,9 @@ func ExtractZip(srcPath, dstDir string) error {
 
 		// If it's a directory, move on to the next entry.
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(fpath, os.ModePerm)
+			if err := os.MkdirAll(fpath, os.ModePerm); err != nil {
+				return &ErrExtract{Path: fpath, Err: err}
+			}
 			continue
 		}
 
@@ -70,34 +72,14 @@ func ExtractZip(srcPath, dstDir string) error {
 	return nil
 }
 
-// ExtractTar extracts a tar archive located at srcPath to the destination
-// directory dstDir.
-func ExtractTar(srcPath, dstDir string) error {
-	// Open the tar archive for reading.
-	file, err := os.Open(srcPath)
-	if err != nil {
-		return &ErrExtract{Path: srcPath, Err: err}
-	}
-	defer file.Close()
-
-	tr := tar.NewReader(file)
-	return untar(tr, srcPath, dstDir)
-}
-
+// ExtractGz extracts a gz compressed file located at srcPath to the
+// destination directory dstDir.
 func ExtractGz(srcPath, dstDir string) error {
-	// Open the .gz archive for reading.
-	file, err := os.Open(srcPath)
+	gzReader, cleanup, err := newGzReader(srcPath)
 	if err != nil {
-		return &ErrExtract{Path: srcPath, Err: err}
+		return err
 	}
-	defer file.Close()
-
-	// Create a new gzip reader.
-	gzReader, err := gzip.NewReader(file)
-	if err != nil {
-		return &ErrExtract{Path: srcPath, Err: err}
-	}
-	defer gzReader.Close()
+	defer cleanup()
 
 	// Determine the destination file name.
 	dstFileName := filepath.Base(srcPath)
@@ -119,21 +101,43 @@ func ExtractGz(srcPath, dstDir string) error {
 	return nil
 }
 
-// ExtractXz extracts a .xz compressed file located at srcPath to the destination
-// directory dstDir.
-func ExtractXz(srcPath, dstDir string) error {
-	// Open the .xz file for reading.
-	file, err := os.Open(srcPath)
+// ExtractBz2 extracts a bz2 compressed file located at srcPath to the
+// destination directory dstDir.
+func ExtractBz2(srcPath, dstDir string) error {
+	bzReader, cleanup, err := newBz2Reader(srcPath)
 	if err != nil {
-		return &ErrExtract{Path: srcPath, Err: err}
+		return err
 	}
-	defer file.Close()
+	defer cleanup()
 
-	// Create a new xz reader.
-	xzReader, err := xz.NewReader(file)
+	// Determine the destination file name.
+	dstFileName := filepath.Base(srcPath)
+	dstFileName = dstFileName[:len(dstFileName)-4] // Remove ".bz2" extension
+	dstPath := filepath.Join(dstDir, dstFileName)
+
+	// Create the destination file.
+	dstFile, err := os.OpenFile(dstPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
-		return &ErrExtract{Path: srcPath, Err: err}
+		return &ErrExtract{Path: dstPath, Err: err}
 	}
+	defer dstFile.Close()
+
+	// Copy the file contents from the bzip2 reader to the destination file.
+	if _, err := io.Copy(dstFile, bzReader); err != nil {
+		return &ErrExtract{Path: dstPath, Err: err}
+	}
+
+	return nil
+}
+
+// ExtractXz extracts an xz compressed file located at srcPath to the
+// destination directory dstDir.
+func ExtractXz(srcPath, dstDir string) error {
+	xzReader, cleanup, err := newXzReader(srcPath)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	// Determine the destination file name.
 	dstFileName := filepath.Base(srcPath)
@@ -155,42 +159,42 @@ func ExtractXz(srcPath, dstDir string) error {
 	return nil
 }
 
-// ExtractTarGz extracts a tar.gz archive located at srcPath to the destination
+// ExtractTar extracts a tar archive located at srcPath to the destination
 // directory dstDir.
-func ExtractTarGz(srcPath, dstDir string) error {
-	// Open the .tar.gz archive for reading.
+func ExtractTar(srcPath, dstDir string) error {
+	// Open the tar archive for reading.
 	file, err := os.Open(srcPath)
 	if err != nil {
 		return &ErrExtract{Path: srcPath, Err: err}
 	}
 	defer file.Close()
 
-	// Create a new gzip reader.
-	gzReader, err := gzip.NewReader(file)
-	if err != nil {
-		return &ErrExtract{Path: srcPath, Err: err}
-	}
-	defer gzReader.Close()
+	tr := tar.NewReader(file)
+	return untar(tr, srcPath, dstDir)
+}
 
-	// Create a new tar reader from the gzip reader.
+// ExtractTarGz extracts a tar.gz archive located at srcPath to the destination
+// directory dstDir.
+func ExtractTarGz(srcPath, dstDir string) error {
+	gzReader, cleanup, err := newGzReader(srcPath)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
 	tr := tar.NewReader(gzReader)
 	return untar(tr, srcPath, dstDir)
 }
 
-// ExtractTarBz2 extracts a tar.bz archive located at srcPath to the destination
+// ExtractTarBz2 extracts a tar.bz2 archive located at srcPath to the destination
 // directory dstDir.
 func ExtractTarBz2(srcPath, dstDir string) error {
-	// Open the .tar.gz archive for reading.
-	file, err := os.Open(srcPath)
+	bzReader, cleanup, err := newBz2Reader(srcPath)
 	if err != nil {
-		return &ErrExtract{Path: srcPath, Err: err}
+		return err
 	}
-	defer file.Close()
+	defer cleanup()
 
-	// Create a new bz2 reader.
-	bzReader := bzip2.NewReader(file)
-
-	// Create a new tar reader from the gzip reader.
 	tr := tar.NewReader(bzReader)
 	return untar(tr, srcPath, dstDir)
 }
@@ -198,21 +202,55 @@ func ExtractTarBz2(srcPath, dstDir string) error {
 // ExtractTarXz extracts a tar.xz archive located at srcPath to the destination
 // directory dstDir.
 func ExtractTarXz(srcPath, dstDir string) error {
-	// Open the .tar.gz archive for reading.
-	file, err := os.Open(srcPath)
+	xzReader, cleanup, err := newXzReader(srcPath)
 	if err != nil {
-		return &ErrExtract{Path: srcPath, Err: err}
+		return err
 	}
-	defer file.Close()
+	defer cleanup()
 
-	xzReader, err := xz.NewReader(file)
-	if err != nil {
-		return &ErrExtract{Path: srcPath, Err: err}
-	}
-
-	// Create a new tar reader from the gzip reader.
 	tr := tar.NewReader(xzReader)
 	return untar(tr, srcPath, dstDir)
+}
+
+// newBz2Reader opens a bz2 file and returns a reader for its decompressed content.
+// The caller must call the returned cleanup function to close the file.
+func newBz2Reader(srcPath string) (io.Reader, func(), error) {
+	file, err := os.Open(srcPath)
+	if err != nil {
+		return nil, nil, &ErrExtract{Path: srcPath, Err: err}
+	}
+	bzReader := bzip2.NewReader(file)
+	return bzReader, func() { file.Close() }, nil
+}
+
+// newXzReader opens an xz file and returns a reader for its decompressed content.
+// The caller must call the returned cleanup function to close the file.
+func newXzReader(srcPath string) (io.Reader, func(), error) {
+	file, err := os.Open(srcPath)
+	if err != nil {
+		return nil, nil, &ErrExtract{Path: srcPath, Err: err}
+	}
+	xzReader, err := xz.NewReader(file)
+	if err != nil {
+		file.Close()
+		return nil, nil, &ErrExtract{Path: srcPath, Err: err}
+	}
+	return xzReader, func() { file.Close() }, nil
+}
+
+// newGzReader opens a gz file and returns a reader for its decompressed content.
+// The caller must call the returned cleanup function to close resources.
+func newGzReader(srcPath string) (io.Reader, func(), error) {
+	file, err := os.Open(srcPath)
+	if err != nil {
+		return nil, nil, &ErrExtract{Path: srcPath, Err: err}
+	}
+	gzReader, err := gzip.NewReader(file)
+	if err != nil {
+		file.Close()
+		return nil, nil, &ErrExtract{Path: srcPath, Err: err}
+	}
+	return gzReader, func() { gzReader.Close(); file.Close() }, nil
 }
 
 func untar(tarReader *tar.Reader, srcPath, dstDir string) error {
@@ -242,7 +280,10 @@ func untar(tarReader *tar.Reader, srcPath, dstDir string) error {
 			if err != nil {
 				return &ErrExtract{Path: srcPath, Err: err}
 			}
-			io.Copy(writer, tarReader)
+			if _, err := io.Copy(writer, tarReader); err != nil {
+				writer.Close()
+				return &ErrExtract{Path: srcPath, Err: err}
+			}
 			writer.Close()
 		default:
 			return &ErrExtract{Path: srcPath, Err: err}

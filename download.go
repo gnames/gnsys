@@ -21,10 +21,7 @@ func Ping(host string, seconds int) bool {
 		time.Second*time.Duration(seconds),
 	)
 
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // Download copies remote file to local drive. It provides the name

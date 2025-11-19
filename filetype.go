@@ -10,11 +10,12 @@ const (
 	UnknownFT FileType = iota
 	ZipFT              // .zip
 	GzFT               // .gz
-	XzFT               // .xz
 	TarFT              // .tar
 	TarGzFT            // .tar.gz
 	TarXzFt            // .tar.xz
 	TarBzFT            // .tar.bz2
+	Bz2FT              // .bz2
+	XzFT               // .xz
 	SqlFT              // .sql
 	SqliteFT           // .sqlite
 )
@@ -23,11 +24,12 @@ var ftMap = map[FileType]string{
 	UnknownFT: "unknown",
 	ZipFT:     "zip",
 	GzFT:      "gz",
-	XzFT:      "xz",
 	TarFT:     "tar",
 	TarGzFT:   "tar-gzip",
 	TarXzFt:   "tar-xz",
 	TarBzFT:   "tar-bz2",
+	Bz2FT:     "bz2",
+	XzFT:      "xz",
 	SqlFT:     "sql",
 	SqliteFT:  "sqlite",
 }
@@ -52,6 +54,8 @@ func GetFileType(file string) FileType {
 		return XzFT
 	case strings.HasSuffix(file, ".tar.bz2"):
 		return TarBzFT
+	case strings.HasSuffix(file, ".bz2"):
+		return Bz2FT
 	case strings.HasSuffix(file, ".sql"):
 		return SqlFT
 	case strings.HasSuffix(file, ".sqlite"):
