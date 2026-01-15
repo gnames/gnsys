@@ -25,9 +25,19 @@ func Ping(host string, seconds int) bool {
 	return err == nil
 }
 
-// Download copies remote file to local drive. It provides the name
-// of downloaded file and error as output. Supports http://, https://,
-// and file:// URLs.
+// Download fetches a file from a URL and saves it to the specified directory.
+// It supports http://, https://, and file:// URL schemes.
+//
+// Parameters:
+//   - rawURL: The source URL to download from. For local files, use file:// scheme
+//     (e.g., "file:///path/to/file.txt").
+//   - destDir: The destination directory where the file will be saved.
+//     The filename is extracted from the URL path.
+//   - showProgress: When true, displays a progress bar during download.
+//     The progress bar clears itself upon completion.
+//
+// Returns the full path to the downloaded file and any error encountered.
+// On error, returns an empty string and an ErrDownload wrapping the underlying error.
 func Download(rawURL, destDir string, showProgress bool) (string, error) {
 	// Parse the URL to determine the scheme
 	parsedURL, err := url.Parse(rawURL)
