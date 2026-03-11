@@ -44,7 +44,7 @@ func GetFileType(file string) FileType {
 		return ZipFT
 	case strings.HasSuffix(file, ".tar"):
 		return TarFT
-	case strings.HasSuffix(file, ".tar.gz"):
+	case strings.HasSuffix(file, ".tar.gz"), strings.HasSuffix(file, ".tgz"):
 		return TarGzFT
 	case strings.HasSuffix(file, ".gz"):
 		return GzFT
